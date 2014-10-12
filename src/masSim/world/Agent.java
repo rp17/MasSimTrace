@@ -8,7 +8,11 @@ import masSim.schedule.ScheduleUpdateEvent;
 import masSim.schedule.Scheduler;
 import masSim.taems.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 import raven.Main;
@@ -25,7 +29,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	private boolean resetScheduleExecutionFlag = false;
 	private ArrayList<IAgent> agentsUnderManagement = null;
 	private AgentMode mode;
-	public ArrayList<WorldEventListener> listeners;
+	public List<WorldEventListener> listeners;
 	public double x;
 	public double y;
 	public boolean flagScheduleRecalculateRequired;
@@ -49,11 +53,11 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		this(newCode,"Agent"+newCode,false,0,0,null);
 	}
 	
-	public Agent(String name, boolean isManagingAgent, int x, int y, ArrayList<WorldEventListener> listeners){
+	public Agent(String name, boolean isManagingAgent, int x, int y, List<WorldEventListener> listeners){
 		this(GloballyUniqueAgentId++,name, isManagingAgent, x, y, listeners);
 	}
 	
-	public Agent(int newCode, String label, boolean isManagingAgent, int x, int y, ArrayList<WorldEventListener> listeners){
+	public Agent(int newCode, String label, boolean isManagingAgent, int x, int y, List<WorldEventListener> listeners){
 		this.code = newCode;
 		this.label = label;
 		taskInd = 0;
@@ -153,7 +157,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		return code;
 	}
 	
-	private void executeSchedule() {
+	public void executeSchedule() {
 		while(flagScheduleRecalculateRequired)
 		{
 			Main.Message(debugFlag, "[Agent 111] Executing Schedule");
@@ -252,6 +256,10 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	}
 	
 	public void update(int tick) {
+	
+	}
+	/*
+	public void update(int tick) {
 		
 		if(schedule.get().hasNext(taskInd)) {
 			ScheduleElement el = schedule.get().peek();
@@ -265,7 +273,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 			System.out.println("Agent " + label + " idle");
 		}
 	}
-
+*/
 	@Override
 	public void run() {
 		//Running the agent means that the agent starts doing two things, and does them indefinitely unless it is killed or suspended.
@@ -273,14 +281,14 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		//Second, it executes those tasks whose schedule had already been created.
 		//Thread agentScheduler = new Thread(this.scheduler,"Scheduler " + this.label);
 		//agentScheduler.start();
-		while(true)
-		{
-			executeSchedule();
-			try {
+		try {
+			while(true) {
+				executeSchedule();
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
+		} catch (InterruptedException e) {
+			//e.printStackTrace();
+			System.out.println("Thread of agent " + this.label + " interrupted");
 		}
 		
 	}

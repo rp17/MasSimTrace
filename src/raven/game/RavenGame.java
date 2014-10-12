@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.JPanel;
 
 import masSim.taems.IAgent;
+import masSim.world.Agent;
 import raven.game.Waypoints.Wpt;
 import raven.game.armory.Bolt;
 import raven.game.armory.Pellet;
@@ -43,6 +45,7 @@ public class RavenGame {
 
 	/** bots that inhabit the current map */
 	private ArrayList<IRavenBot> bots = new ArrayList<IRavenBot>();
+	private List<IAgent> agents;
 
 	/** A user may control a bot manually. This is that bot */
 	private IRavenBot selectedBot;
@@ -54,7 +57,7 @@ public class RavenGame {
 	PathManager pathManager = new PathManager(RavenScript.getInt("MaxSearchCyclesPerUpdateStep"));;
 
 	/** true if the game is paused */
-	boolean paused;
+	public static volatile boolean paused;
 
 	/** true if a bot is removed from the game */
 	boolean removeBot;
@@ -138,6 +141,10 @@ public class RavenGame {
 		
 	}
 
+	
+	public void setAgents(List<IAgent> agList) {
+		agents = agList;
+	}
 	/** The usual suspects */
 	public synchronized void render() {
 		Log.trace("game", "Rendering game");
@@ -220,6 +227,42 @@ public class RavenGame {
 		}
 	}
 
+	
+	public void updateAgents(double delta) {
+		Log.trace("game", "Beginning update");
+		
+		// Check if we need to switch maps
+		if (newMapPath != null) {
+			try {
+				loadMap(newMapPath);
+				int width = getMap().getSizeX();
+				int height = getMap().getSizeY();
+				GameCanvas.getInstance().setNewSize(width, height);
+				Main.getUI().setTitle(getMap().getName());
+				//Main.getUI().validate();
+				((JPanel)Main.getUI().getContentPane()).setPreferredSize(new Dimension(width, height));
+				//Main.getUI().getContentPane().setSize(width, height);
+				Main.getUI().pack();
+				
+			} catch (IOException e) {
+				Log.warn("game", "Failed to load map " + newMapPath + ".");
+			}
+			finally{
+				newMapPath = null;
+			}
+		}
+		
+		if (paused) {
+			return;
+		}
+		
+		
+		for(IAgent agent : agents) {
+			((Agent)agent).executeSchedule();
+		}
+		
+	}
+	
 	/**
 	 * Update the game state over the given timestep in seconds.
 	 * 
@@ -348,7 +391,7 @@ public class RavenGame {
 		}
 		*/
 	}
-
+/*
 	private void initBots() {
 		INetNode mobNode = new NetNode("MobileNode", this, new Vector2D(300.0, 190.0), 130.0);
 		addNetNode(mobNode);
@@ -363,6 +406,7 @@ public class RavenGame {
 		mobNode.addNeighbor(node3);
 		
 	}
+*/
 	public void switchToMap(String filename) {
 		newMapPath = filename;
 	}
