@@ -24,7 +24,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	private static int GloballyUniqueAgentId = 1;
 	private int code;
 	private Scheduler scheduler;
-	private final AtomicReference<Schedule> schedule = new AtomicReference<Schedule>();
+	private final AtomicReference<Schedule> schedule = new AtomicReference<Schedule>(); // the schedule content must be thread safe, not just a reference to it
 	private int taskInd;
 	private boolean resetScheduleExecutionFlag = false;
 	private ArrayList<IAgent> agentsUnderManagement = null;
@@ -45,7 +45,6 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	{
 		return this.label;
 	}
-	
 	/** alive, dead or spawning? */
 	private Status status;
 	
@@ -138,18 +137,16 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		this.fireWorldEvent(TaskType.METHODCOMPLETED, null, m.label, m.x, m.y, m);
 		flagScheduleRecalculateRequired = true;
 		Main.Message(true, "[Agent " + this.label + " ] " + m.label + " completed and recalc flag set to " + flagScheduleRecalculateRequired);
+		
+		
 	}
 	
 	public void fireAgentMovedEvent(TaskType type, String agentId, String methodId, double x2, double y2, IAgent agent, Method method) {
         Main.Message(debugFlag, "[Agent " + this.label + " ] Firing Execute Method for " + methodId);
 		WorldEvent worldEvent = new WorldEvent(this, TaskType.EXECUTEMETHOD, agentId, methodId, x2, y2, agent, method);
-        Iterator it = listeners.iterator();
-        WorldEventListener listener;
-        while(it.hasNext())
-        {
-        	listener = (WorldEventListener)it.next();
-        	listener.HandleWorldEvent(worldEvent);
-        }
+		for(WorldEventListener listener : listeners) {
+			listener.HandleWorldEvent(worldEvent);
+		}
     }
 	
 	// Returns identifying code, specific for this agent
@@ -157,6 +154,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		return code;
 	}
 	
+	// why executeSchedule invokes the scheduler in a loop ? shouldn't it just execute a given schedule ?
 	public void executeSchedule() {
 		while(flagScheduleRecalculateRequired)
 		{
@@ -182,6 +180,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 						Method m = e.getMethod();
 						Main.Message(debugFlag, "[Agent " + this.label + " ] Next method to be executed from schedule " + m.label);
 						Execute(m);
+						// this should be replaced with conditional synchronization if this thread indeed needs to sleep
 						while(!flagScheduleRecalculateRequired)
 						{	
 							//Main.Message(debugFlag, "[Agent 126] Waiting completion of " + m.label + " with flag " + flagScheduleRecalculateRequired);

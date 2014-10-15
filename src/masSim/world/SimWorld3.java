@@ -6,14 +6,27 @@ import java.util.List;
 
 import raven.Main;
 import raven.game.RavenGame;
+import raven.game.RoverBot;
+import raven.game.Waypoints;
+import raven.game.interfaces.IRavenBot;
+import raven.goals.GoalComposite;
+import raven.math.Vector2D;
+import raven.ui.GoalCompletionWatcher;
 import masSim.world.*;
 import masSim.world.WorldEvent.TaskType;
 import masSim.taems.*;
 
-public class SimWorld3 {
+public class SimWorld3 implements WorldEventListener {
 
+	private boolean debugFlag = true;
 	private List<IAgent> agents;
 	private List<Task> tasks;
+	private List<Task> tasksA;
+	private List<Task> tasksB;
+	
+	private Method lastMethA;
+	private Method lastMethB;
+	
 	private List<WorldEventListener> listeners;
 	private IAgent mainAgent;
 	
@@ -21,12 +34,16 @@ public class SimWorld3 {
 	{
 		agents = new ArrayList<IAgent>();
 		tasks = new ArrayList<Task>();
+		tasksA = new ArrayList<Task>();
+		tasksB = new ArrayList<Task>();
 		listeners = new ArrayList<WorldEventListener>();
 		listeners.add(eventListener);
+		listeners.add(this);
 		
 		//Initialize two agents, and specify their initial positions
 		Agent agentOne = new Agent("Helicopter0", true, 40, 100, listeners);
 		Agent agentTwo = new Agent("Helicopter1", false, 40, 200, listeners);
+		RegisterMainAgent(agentOne);
 		mainAgent = agentOne;
 		agentOne.AddChildAgent(agentTwo);
 		agents.add(agentOne);
@@ -34,29 +51,45 @@ public class SimWorld3 {
 				
 		eventListener.RegisterMainAgent(agentOne);
 	}
+	private void initTasks() {
+		Method m_from = new Method("Visit Station A1",10,100,110);
+		tasksA.add(new Task("Station A1",new SumAllQAF(), m_from, mainAgent));
+		tasksA.add(new Task("Station A2",new SumAllQAF(), new Method("Visit Station A2",10,200,90), mainAgent));
+		tasksA.add(new Task("Station A3",new SumAllQAF(), new Method("Visit Station A3",10,500,90), mainAgent));
+		tasksA.add(new Task("Station A4",new SumAllQAF(), new Method("Visit Station A4",10,500,200), mainAgent));
+		tasksA.add(new Task("Station A5",new SumAllQAF(), new Method("Visit Station A5",10,300, 200), mainAgent));
+		
+		lastMethA = new Method("Visit Station A6",10,250,200);
+		tasksA.add(new Task("Station A6",new SumAllQAF(), lastMethA, mainAgent));
+		
+		
+		Method m_to = new Method("Visit Station B1",1,100,210);
+		//m_to.AddInterrelationship(new Interrelationship(m_from, m_to, new Outcome(100,1,1)));
+		tasksB.add(new Task("Station B1",new SumAllQAF(), m_to, agents.get(1)));
+		tasksB.add(new Task("Station B2",new SumAllQAF(), new Method("Visit Station B2",1,200,190), agents.get(1)));
+		tasksB.add(new Task("Station B3",new SumAllQAF(), new Method("Visit Station B3",1,300,210), agents.get(1)));
+		tasksB.add(new Task("Station B4",new SumAllQAF(), new Method("Visit Station B4",1,400,190), agents.get(1)));
+		tasksB.add(new Task("Station B5",new SumAllQAF(), new Method("Visit Station B5",1,500,210), agents.get(1)));
+		
+		lastMethB = new Method("Visit Station B6",1,600,190);
+		tasksB.add(new Task("Station B6",new SumAllQAF(), lastMethB, agents.get(1)));
+		
+	}
 	
+	private void assignTasksToMain() {
+		for( Task task : tasksA) {
+			mainAgent.assignTask(task);
+		}
+		
+		for( Task task : tasksB) {
+			mainAgent.assignTask(task);
+		}
+		
+	}
 	public List<IAgent> initAgents()
 	{
-					
-				Method m_from = new Method("Visit Station A1",10,100,110);
-				mainAgent.assignTask(new Task("Station A1",new SumAllQAF(), m_from, mainAgent));
-				mainAgent.assignTask(new Task("Station A2",new SumAllQAF(), new Method("Visit Station A2",10,200,90), mainAgent));
-				mainAgent.assignTask(new Task("Station A3",new SumAllQAF(), new Method("Visit Station A3",10,300,110), mainAgent));
-				mainAgent.assignTask(new Task("Station A4",new SumAllQAF(), new Method("Visit Station A4",10,400,90), mainAgent));
-				mainAgent.assignTask(new Task("Station A5",new SumAllQAF(), new Method("Visit Station A5",10,500,110), mainAgent));
-				mainAgent.assignTask(new Task("Station A6",new SumAllQAF(), new Method("Visit Station A6",10,600,90), mainAgent));
-							
-							
-				Method m_to = new Method("Visit Station B1",1,100,210);
-				m_to.AddInterrelationship(new Interrelationship(m_from, m_to, new Outcome(100,1,1)));
-				mainAgent.assignTask(new Task("Station B1",new SumAllQAF(), m_to, agents.get(1)));
-				mainAgent.assignTask(new Task("Station B2",new SumAllQAF(), new Method("Visit Station B2",1,200,190), agents.get(1)));
-				mainAgent.assignTask(new Task("Station B3",new SumAllQAF(), new Method("Visit Station B3",1,300,210), agents.get(1)));
-				mainAgent.assignTask(new Task("Station B4",new SumAllQAF(), new Method("Visit Station B4",1,400,190), agents.get(1)));
-				mainAgent.assignTask(new Task("Station B5",new SumAllQAF(), new Method("Visit Station B5",1,500,210), agents.get(1)));
-				mainAgent.assignTask(new Task("Station B6",new SumAllQAF(), new Method("Visit Station B6",1,600,190), agents.get(1)));
-
-				
+		initTasks();
+		assignTasksToMain();
 				
 		//Start Agents
 				
@@ -82,5 +115,49 @@ public class SimWorld3 {
     }
     
     
-
+    private boolean lastAcompleted = false;
+    private boolean lastBcompleted = false;
+    private void resetCompletedFlags() {
+    	lastAcompleted = false;
+    	lastBcompleted = false;
+    }
+    private int ticks = 0;
+    public void HandleWorldEvent(WorldEvent event) {
+		
+		if (event.taskType == TaskType.METHODCOMPLETED)
+		{
+			Method m = event.method;
+			Main.Message(debugFlag, "[SimWorld] method " + m.label + " completed");
+			if(m.label.equals(lastMethA.label)) {
+				lastAcompleted = true;
+				Main.Message(debugFlag, "[SimWorld] last method A " + m.label + " completed");
+			}
+			
+			else if(m.label.equals(lastMethB.label)) {
+				lastBcompleted = true;
+				Main.Message(debugFlag, "[SimWorld] last method B " + m.label + " completed");
+			}
+			
+			if(lastAcompleted && lastBcompleted) {
+				resetCompletedFlags();
+				if(ticks < 2) {
+					ticks++;
+					reassignTasks();
+				}
+				Main.Message(debugFlag, "[SimWorld] both last methods A and B completed");
+			}
+		}
+		//Main.Message(debugFlag, "[RavenUI 488] Executing Task at " + popupLoc.x + " " + popupLoc.y);
+		
+	}
+    private void reassignTasks(){
+    	WorldState.clearCompletedMethods();
+    	tasksA.clear();
+    	tasksB.clear();
+    	initTasks();
+    	assignTasksToMain();
+    }
+    public void RegisterMainAgent(IAgent agent) {
+		this.mainAgent = agent;
+	}
 }

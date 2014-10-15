@@ -38,7 +38,13 @@ public class RoverBot extends RavenBot {
 	private boolean doPID = false;
 	protected PIDcontroller pid = new PIDcontroller(0.7f, 0.8f, 0.1f);
 	
-	public void setAgent(IAgent agent){this.agent = agent;}
+	public void setAgent(IAgent agent){
+		if(agent != null) {
+			this.agent = agent;
+			name = agent.getName();
+			ID = agent.getCode();
+		}
+	}
 	public IAgent getAgent(){return this.agent;}
 	public RoverBot(RavenGame world, Vector2D pos, Goal.GoalType mode) {
 		super(world, pos, mode);

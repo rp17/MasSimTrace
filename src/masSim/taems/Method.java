@@ -59,7 +59,14 @@ public class Method extends Node implements IMethod {
 		//Only print if its an actual task, and not an FSM connective created by the scheduler
 		this.NotifyAll();
 	}
-	
+	@Override
+	public synchronized void MarkUncompleted()
+	{
+		super.MarkUncompleted();
+		WorldState.CompletedMethods.remove(this);
+		//Only print if its an actual task, and not an FSM connective created by the scheduler
+		//this.NotifyAll();
+	}
 	public DijkstraDistance getPathUtilityRepresentedAsDistance(DijkstraDistance distanceTillPreviousNode)
 	{
 		//This is distance calculation for this step only. Previous distance used for calculation, but not appended

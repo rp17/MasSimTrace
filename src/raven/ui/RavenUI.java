@@ -488,6 +488,9 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 				if (g!=null){
 					Main.Message(true, "[RavenUI 488] Agent is" + event.agent.getName());
 					GoalCompletionWatcher w = new GoalCompletionWatcher(g,event.agent,event.method);
+					
+					// this implements a polling solution for busy-waiting for goal completions, also spawns many GoalCompletionWatcher instances polluting memory for
+					// the garbage collector; should be replaced with a conditional synchronization
 					Thread agentThread = new Thread(w,"Watcher"+event.methodId);
 					agentThread.start();
 				}

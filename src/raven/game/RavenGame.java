@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 
 import javax.swing.JFileChooser;
@@ -44,7 +46,8 @@ public class RavenGame {
 	private RavenMap map;
 
 	/** bots that inhabit the current map */
-	private ArrayList<IRavenBot> bots = new ArrayList<IRavenBot>();
+	private ArrayList<IRavenBot> bots = new ArrayList<IRavenBot>(3);
+	private Map<String, IRavenBot> botMap = new HashMap<String, IRavenBot>();
 	private List<IAgent> agents;
 
 	/** A user may control a bot manually. This is that bot */
@@ -79,10 +82,11 @@ public class RavenGame {
 		Log.debug("game", "Clearing Map");
 		// delete the bots
 		bots.clear();
+		botMap.clear();
 		// delete any active projectiles
 		projectiles.clear();
 	}
-
+/*
 	private boolean attemptToAddBot(IRavenBot bot) {
 		if (map.getSpawnPoints().size() <= 0) {
 			Log.error("game", "Map has no spawn points, cannot add bot");
@@ -121,7 +125,7 @@ public class RavenGame {
 					RavenMessage.MSG_USER_HAS_REMOVED_BOT, bot);
 		}
 	}
-
+*/
 	// /////////////////
 	// Public methods
 
@@ -439,7 +443,7 @@ public class RavenGame {
 		
 		return true;
 	}
-
+/*
 	protected void addBots(int numBotsToAdd) {
 		Log.info("game", "Adding " + numBotsToAdd + " bots to the map");
 		while (numBotsToAdd-- > 0) {
@@ -477,7 +481,7 @@ public class RavenGame {
 		INetNode mobNode = new NetNode("Rover", this, pos, 10.0);
 		addNetNode(mobNode);
 	}
-	
+*/
 	public void addRocket(IRavenBot shooter, Vector2D target) {
 		Log.trace("game", "Added rocket");
 		RavenProjectile rocket = new Rocket(shooter, target);	
@@ -639,13 +643,18 @@ public class RavenGame {
 		return null;
 	}
 	
+	// use hash map !!
 	public IRavenBot getBotByName(String label) {
+		
+		return botMap.get(label);
+		/*
 		for (IRavenBot bot : bots) {
 			if (((RoverBot)bot).name == label) {
 				return bot;
 			}
 		}	
 		return null;
+		*/
 	}
 
 	public boolean togglePause() {
@@ -852,17 +861,17 @@ public class RavenGame {
 		boolean available = true;
 		for (IRavenBot other : bots) {
 			if (pos.distance(other.pos()) < other.getBRadius()) {
-				available = false;
-				return available;
+				return false;
 			}
 		}
 		IRavenBot bot = new RoverBot(this, pos, Goal.GoalType.goal_roverthink);
 		bot.setAgent(agent);
-		((RoverBot)bot).name = name;
+		//((RoverBot)bot).name = name; name is set by setAgent
 		// switch the default steering behaviors on
 		bot.getSteering().wallAvoidanceOn();
 		bot.getSteering().separationOn();
 		bots.add(bot);
+		botMap.put(agent.getName(), bot);
 		Log.info("game", "Bot " + bot.ID() + " added");
 					
 		// register the bot with the entity manager
@@ -876,5 +885,6 @@ public class RavenGame {
 	public void removeBot(IRavenBot bot){
 		bot.getBrain().removeAllSubgoals();
 		bots.remove(bot);
+		botMap.remove(((RoverBot)bot).getAgent().getName());
 	}
 }

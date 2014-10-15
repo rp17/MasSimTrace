@@ -7,11 +7,12 @@ import java.util.List;
 import java.util.Vector;
 
 public abstract class Node extends Element  implements IObserver {
+	public static final int    INIT = 0;
 	public static final int    EXECUTING = 1;
 	public static final int    COMPLETED = 2;
 	public static final int    ACTIVE = 3;
 	protected int NodeType;
-	protected transient int status;
+	protected transient int status = INIT;
 	protected List<Node> children;
 	public ArrayList<Node> Observers = new ArrayList<Node>();
 	public abstract boolean IsTask();
@@ -206,7 +207,10 @@ public abstract class Node extends Element  implements IObserver {
 		{
 			this.status = COMPLETED;
 		}
-	    
+	    public void MarkUncompleted()
+		{
+			this.status = INIT;
+		}
 		@Override
 		public void NotifyAll() {
 			for(Node b : this.Observers)

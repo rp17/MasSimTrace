@@ -86,12 +86,19 @@ public class Scheduler {// implements Runnable {
 	//}
 	
 	public boolean containWaypoint(List<Task> taskList, Schedule sc) {
+		boolean res = true;
 		for(Task task : taskList) {
-			if(!sc.containsElement(task.label)) return false;
+			if(!sc.containsElement(task.label)) 
+				{
+					res = false;
+					break;
+				}
 		}
-		return true;
+		newTaskList.clear();
+		return res;
 	}
 	
+	List<Task> newTaskList = new ArrayList<Task>();
 	public Schedule RunStatic()
 	{
 		try {
@@ -99,9 +106,7 @@ public class Scheduler {// implements Runnable {
 			int numberOfPendingTasks = this.PendingTasks.size();
 			if (numberOfPendingTasks<=0) return null;
 			String debugMessage = "";
-			
-			List<Task> newTaskList = new ArrayList<Task>(5);
-			
+			newTaskList.clear();
 			for(int i=0;i<numberOfPendingTasks;i++)
 			{
 				Task newTask = this.PendingTasks.get(0);

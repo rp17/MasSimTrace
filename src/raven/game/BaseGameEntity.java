@@ -7,7 +7,7 @@ public abstract class BaseGameEntity {
 	
 	public static final int DEFAULT_ENTITY_TYPE = -1;
 	
-	private int ID;
+	protected int ID;
 	
 	private RavenObject type;
 	
