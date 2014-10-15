@@ -85,6 +85,13 @@ public class Scheduler {// implements Runnable {
 	//	}
 	//}
 	
+	public boolean containWaypoint(List<Task> taskList, Schedule sc) {
+		for(Task task : taskList) {
+			if(!sc.containsElement(task.label)) return false;
+		}
+		return true;
+	}
+	
 	public Schedule RunStatic()
 	{
 		try {
@@ -92,13 +99,20 @@ public class Scheduler {// implements Runnable {
 			int numberOfPendingTasks = this.PendingTasks.size();
 			if (numberOfPendingTasks<=0) return null;
 			String debugMessage = "";
+			
+			List<Task> newTaskList = new ArrayList<Task>(5);
+			
 			for(int i=0;i<numberOfPendingTasks;i++)
 			{
 				Task newTask = this.PendingTasks.get(0);
 				debugMessage += " > " + newTask.label;
 				this.PendingTasks.remove(0);
 				if (newTask.agent.equals(agent)){
+					
 					taskGroup.addTask(newTask);
+					
+					newTaskList.add(newTask);
+					
 					Main.Message(debugFlag, "[Scheduler 95] task added " + newTask.label + " in " + agent.getName());
 					
 				}

@@ -5,11 +5,14 @@ import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
 
 import raven.Main;
 
 public class Schedule {
 	private Queue<ScheduleElement> items;
+	private Map<String, ScheduleElement> itemsMap = new HashMap<String, ScheduleElement>();
 	public int TotalQuality = 0;
 	public Schedule() {
 		items = new ConcurrentLinkedQueue<ScheduleElement>();
@@ -17,10 +20,15 @@ public class Schedule {
 	public void addItem(ScheduleElement item){
 		//Main.Message("[Schedule] Added to schedule task " + item.getName());
 		items.add(item);
+		itemsMap.put(item.getName(), item);
 	}
 	public void RemoveElement(ScheduleElement item)
 	{
 		items.remove(item);
+		itemsMap.remove(item.getName());
+	}
+	public boolean containsElement(String elName) {
+		return itemsMap.containsKey(elName);
 	}
 	public ScheduleElement poll(){
 		return items.poll();

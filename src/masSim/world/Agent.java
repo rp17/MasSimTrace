@@ -102,13 +102,13 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		
 		while (!AreEnablersInPlace(m))
 		{
-			Main.Message(true, "[Agent 88] " + m.label + " enabler not in place. Waiting...");
+			Main.Message(true, "[Agent " + this.label + " ] " + m.label + " enabler not in place. Waiting...");
 			Thread.sleep(1000);
 		}
 		if (m.x!=0 && m.y!=0)
 		{
 			fireAgentMovedEvent(TaskType.EXECUTEMETHOD, this.label, m.label, m.x, m.y, this, m);
-			Main.Message(true, "[Agent 76] Agent " + this.label + " executing " + m.label);
+			Main.Message(true, "[Agent " + this.label + " ] executing " + m.label);
 			this.flagScheduleRecalculateRequired = false;
 		}
 	}
@@ -119,7 +119,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		//schedule.get().RemoveElement(e);Does this need to be done?
 		m.MarkCompleted();
 		WorldState.CompletedMethods.add(m);
-		Main.Message(true, "[Agent 130] " + m.label + " added to completed queue");
+		Main.Message(true, "[Agent " + this.label + " ] " + m.label + " added to completed queue");
 		if (schedule.get()!=null)
 		{
 			Iterator<ScheduleElement> el = schedule.get().getItems();
@@ -131,17 +131,17 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 				if (m.equals(e.getMethod()))
 				{
 					schedule.get().RemoveElement(e);
-					Main.Message(true, "[Agent 135] Removed " + e.getName() + " from schedule");
+					Main.Message(true, "[Agent " + this.label + " ] Removed " + e.getName() + " from schedule");
 				}
 			}
 		}
 		this.fireWorldEvent(TaskType.METHODCOMPLETED, null, m.label, m.x, m.y, m);
 		flagScheduleRecalculateRequired = true;
-		Main.Message(true, "[Agent 87] " + m.label + " completed and recalc flag set to " + flagScheduleRecalculateRequired);
+		Main.Message(true, "[Agent " + this.label + " ] " + m.label + " completed and recalc flag set to " + flagScheduleRecalculateRequired);
 	}
 	
 	public void fireAgentMovedEvent(TaskType type, String agentId, String methodId, double x2, double y2, IAgent agent, Method method) {
-        Main.Message(debugFlag, "[Agent 78] Firing Execute Method for " + methodId);
+        Main.Message(debugFlag, "[Agent " + this.label + " ] Firing Execute Method for " + methodId);
 		WorldEvent worldEvent = new WorldEvent(this, TaskType.EXECUTEMETHOD, agentId, methodId, x2, y2, agent, method);
         Iterator it = listeners.iterator();
         WorldEventListener listener;
@@ -160,13 +160,13 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	public void executeSchedule() {
 		while(flagScheduleRecalculateRequired)
 		{
-			Main.Message(debugFlag, "[Agent 111] Executing Schedule");
+			Main.Message(debugFlag, "[Agent " + this.label + " ] Executing Schedule");
 			flagScheduleRecalculateRequired = false;
-			Main.Message(debugFlag, "[Agent 111] Running again");
+			Main.Message(debugFlag, "[Agent " + this.label +  " ] Running again");
 			Schedule newSchedule = this.scheduler.RunStatic();
 			if (newSchedule!=null) {
 				schedule.set(newSchedule);
-				Main.Message(debugFlag, "[Agent 119] Schedule Updated. New first method " + schedule.get().peek().getMethod().label);
+				Main.Message(debugFlag, "[Agent " + this.label + " ] Schedule Updated. New first method " + schedule.get().peek().getMethod().label);
 			}
 			if (schedule.get()!=null)
 			{
@@ -180,7 +180,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 						else
 							continue;
 						Method m = e.getMethod();
-						Main.Message(debugFlag, "[Agent 132] Next method to be executed from schedule " + m.label);
+						Main.Message(debugFlag, "[Agent " + this.label + " ] Next method to be executed from schedule " + m.label);
 						Execute(m);
 						while(!flagScheduleRecalculateRequired)
 						{	
@@ -203,7 +203,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		{
 			if (this.equals(task.agent))
 			{
-				Main.Message(debugFlag, "[Agent] " + label + " assigned " + task.label);
+				Main.Message(debugFlag, "[Agent " + this.label + " ] assigned " + task.label);
 				Iterator<Node> it = task.getSubtasks();
 				while(it.hasNext())
 				{
@@ -219,7 +219,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 			}
 			else if (this.agentsUnderManagement.contains(task.agent)) 
 			{
-				Main.Message(debugFlag, "[Agent] 150" + task.label + " already has agent assigned");
+				Main.Message(debugFlag, "[Agent " + this.label + " ] "+ task.label + " already has agent assigned");
 				task.agent.assignTask(task);
 			}
 			else
@@ -234,14 +234,14 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 			int baseQuality = this.getExpectedScheduleQuality(null, this);
 			int qualityWithThisAgent = this.getExpectedScheduleQuality(task, this);
 			int addedQuality = qualityWithThisAgent - baseQuality;
-			Main.Message(true, "[Agent 162] Quality with agent " + this.getName() + " " + qualityWithThisAgent + " + " + baseQuality + " = " + addedQuality);
+			Main.Message(true, "[Agent " + this.label + " ] Quality with agent " + this.getName() + " " + qualityWithThisAgent + " + " + baseQuality + " = " + addedQuality);
 			IAgent selectedAgent = this;
 			for(IAgent ag : this.agentsUnderManagement)
 			{
 				baseQuality = this.getExpectedScheduleQuality(null, ag);
 				qualityWithThisAgent = ag.getExpectedScheduleQuality(task, ag);
 				int newAddedQuality = qualityWithThisAgent-baseQuality;
-				Main.Message(true, "[Agent 162] Quality with agent " + this.getName() + " " + qualityWithThisAgent + " + " + baseQuality + " = " + newAddedQuality);
+				Main.Message(true, "[Agent " + this.label + " ] Quality with agent " + this.getName() + " " + qualityWithThisAgent + " + " + baseQuality + " = " + newAddedQuality);
 				if (newAddedQuality>addedQuality)
 				{
 					addedQuality = newAddedQuality;
@@ -249,7 +249,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 				}
 			}
 			task.agent = selectedAgent;
-			Main.Message(true, "[Agent 175] Assigning " + task.label + " to " + task.agent.getName());
+			Main.Message(true, "[Agent " + this.label + " ] Assigning " + task.label + " to " + task.agent.getName());
 			flagScheduleRecalculateRequired = true;
 			assignTask(task);
 		}
