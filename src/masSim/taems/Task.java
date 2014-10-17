@@ -58,7 +58,7 @@ public class Task extends Node {
 	
 	
 	@Override
-	public void MarkCompleted()
+	public synchronized void MarkCompleted()
 	{
 		super.MarkCompleted();
 		Main.Message(debugFlag, "[Task 63] Task " + label + " completed.");

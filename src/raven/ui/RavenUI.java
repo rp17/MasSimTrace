@@ -38,8 +38,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import masSim.taems.IAgent;
+import masSim.world.Agent;
 import masSim.taems.SumAllQAF;
 import masSim.taems.Task;
+import masSim.taems.Schedule;
+import masSim.schedule.Scheduler;
 import masSim.world.WorldEvent;
 import masSim.world.WorldEvent.TaskType;
 import masSim.world.WorldEventListener;
@@ -52,7 +55,9 @@ import raven.game.RavenUserOptions;
 import raven.game.Waypoints.Wpt;
 import raven.game.interfaces.IRavenBot;
 import raven.game.Waypoints;
+import raven.game.navigation.PathEdge;
 import raven.goals.GoalComposite;
+import raven.goals.Goal_PidTraverseEdge;
 import raven.math.Vector2D;
 import raven.utils.Log;
 import raven.utils.Log.Level;
@@ -63,7 +68,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 	 * 
 	 */
 	private static final long serialVersionUID = -3435740439713124161L;
-	private boolean debugFlag = false;
+	private boolean debugFlag = true;
 	private int width = 700;
 	private int height = 700;
 	private int framerate = 60;
@@ -150,6 +155,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		});
 	    popup.add(menuItem);
 	    
+	    /*
 	    menuItem = new JMenuItem("Start bot");
 	    menuItem.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -164,6 +170,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 			}
 		});
 	    popup.add(menuItem);
+	    */
 	    
 	    menuItem = new JMenuItem("Cancel");
 	    menuItem.addActionListener(new ActionListener() {
@@ -445,9 +452,11 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		case KeyEvent.VK_4:
 			game.changeWeaponOfPossessedBot(RavenObject.RAIL_GUN);
 			break;
+		/*
 		case KeyEvent.VK_X:
 			game.exorciseAnyPossessedBot();
 			break;
+			*/
 		}
 	}
 
@@ -466,8 +475,8 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		}
 		if (event.taskType==TaskType.METHODCOMPLETED)
 		{
-			Vector2D popupLoc = new Vector2D(event.xCoordinate, event.yCoordinate);
-			game.removeWpt(popupLoc, event.methodId);
+			//Vector2D popupLoc = new Vector2D(event.xCoordinate, event.yCoordinate);
+			game.removeWpt(event.methodId);
 		}
 		if (event.taskType==TaskType.METHODCREATED)
 		{
@@ -477,14 +486,33 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		}
 		if (event.taskType==TaskType.EXECUTEMETHOD)
 		{
-			Vector2D popupLoc = new Vector2D(event.xCoordinate, event.yCoordinate);
+			//Main.Message(debugFlag, "[RavenUI] HandleWorldEvent task " + event.method.label + " received");
+			// Vector2D popupLoc = new Vector2D(event.xCoordinate, event.yCoordinate);
 			IRavenBot bot = game.getBotByName(event.agentId);
 			
 			if(bot != null && bot instanceof RoverBot) {
 				RoverBot rbot = (RoverBot)bot;
-				Waypoints matchedWaypoints = game.getWptsForMethodExecution(event.methodId, rbot.pos());
+				
+				// why for a single method of going to one point a set of waypoints is obtained ?
+				// Waypoints matchedWaypoints = game.getWptsForMethodExecution(event.methodId, rbot.pos());
+				
+				Waypoints.Wpt wpt = game.getWpt(event.methodId);
+				if(wpt == null) {
+					Main.Message(debugFlag, "[RavenUI] no waypoint in RavenGame for task name " +  event.methodId);
+					return;
+				}
 				Main.Message(debugFlag, "[RavenUI 472] Handling Method " + event.methodId + ". Going to " + event.xCoordinate + ", " + event.yCoordinate);
-				GoalComposite<RoverBot> g = rbot.addWptsGoal(matchedWaypoints);
+				
+				// check if a schedule contains more than one element to decide if it's the last waypoint
+				Agent ag = (Agent)event.agent;
+				int schedSize = ag.schedSize();
+				if(schedSize == 0) {
+					Main.Message(debugFlag, "[RavenUI] schedule size of agent " +  event.agent.getName() + " is 0 !");
+					return;
+				}
+				//GoalComposite<RoverBot> g = rbot.addWptsGoal(game.getWpts());
+				GoalComposite<RoverBot> g = rbot.addSingleWptGoal(wpt, schedSize == 1, event.method);
+				/*
 				if (g!=null){
 					Main.Message(true, "[RavenUI 488] Agent is" + event.agent.getName());
 					GoalCompletionWatcher w = new GoalCompletionWatcher(g,event.agent,event.method);
@@ -496,10 +524,17 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 				}
 				else
 				{
-					event.agent.MarkMethodCompleted(event.method);
+					// why is method complete if goal is null ? 
+					// event.agent.MarkMethodCompleted(event.method);
+					Main.Message(debugFlag, "[RavenUI] PID traverse edge goal is null for agent " + ag.getName() + " !");
 				}
+				*/
+				// Main.Message(debugFlag, "[RavenUI 488] Executing Task at " + popupLoc.x + " " + popupLoc.y);
 			}
-			Main.Message(debugFlag, "[RavenUI 488] Executing Task at " + popupLoc.x + " " + popupLoc.y);
+			else {
+				Main.Message(debugFlag, "[RavenUI]  no corresponding RoverBot for agent " + event.agent.getName() + " for task " + event.method.label);
+			}
+			
 		}
 	}
 	@Override

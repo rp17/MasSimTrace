@@ -6,10 +6,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Map;
+import java.util.HashMap;
 
 import masSim.taems.IAgent;
+import masSim.taems.Method;
 import raven.Main;
 import raven.game.Waypoints;
+import raven.game.Waypoints.Wpt;
 import raven.game.navigation.NavGraphEdge;
 import raven.game.navigation.PathEdge;
 import raven.goals.Goal;
@@ -37,6 +41,8 @@ public class RoverBot extends RavenBot {
 	private double speed = 0;
 	private boolean doPID = false;
 	protected PIDcontroller pid = new PIDcontroller(0.7f, 0.8f, 0.1f);
+	private Map<GoalComposite<RoverBot>, Method> goalMethodMap = new HashMap<GoalComposite<RoverBot>, Method>();
+	private boolean debugFlag = true;
 	
 	public void setAgent(IAgent agent){
 		if(agent != null) {
@@ -56,6 +62,7 @@ public class RoverBot extends RavenBot {
 		steeringNoise = steerNoise;
 		distanceNoise = distNoise;
 	}
+	// warning: this method does not update goalMethodMap so no completion notifications are sent
 	public GoalComposite<RoverBot> addWptsGoal(Waypoints wpts){
 		if(wpts.size() > 1) {
 			List<PathEdge>  m_Path = new ArrayList<PathEdge>();
@@ -74,10 +81,41 @@ public class RoverBot extends RavenBot {
 			brain.ClearAndAddSubgoal(g);
 			return g;
 		}
-		Main.Message(true, "[RoverBot 70] Waypoints size is zero or one");
+		Main.Message(true, "[RoverBot " + ID + " ] Waypoints size is less than two");
 		return null;
 	}
-	
+	public GoalComposite<RoverBot> addSingleWptGoal(Waypoints.Wpt wpt, boolean lastWpt, Method m) {
+		/*
+		Vector2D src = this.position;
+		Vector2D dest = wpt.pos;
+		PathEdge edge = new PathEdge(src, dest, NavGraphEdge.NORMAL, 0);
+		Goal_PidTraverseEdge g = new Goal_PidTraverseEdge(this, edge, lastWpt);
+		goalMethodMap.put(g, m);
+		Main.Message(debugFlag, "[RoverBot " + ID + " ] addSingleWptGoal");
+		brain.ClearAndAddSubgoal(g);
+		return g;
+		*/
+		Waypoints wpts = new Waypoints();
+		wpts.addWpt(this.position, "curPos");
+		wpts.addWpt(wpt, m.label);
+		GoalComposite<RoverBot> g = addWptsGoal(wpts);
+		goalMethodMap.put(g, m);
+		Main.Message(debugFlag, "[RoverBot " + ID + " ] addSingleWptGoal finished");
+		return g;
+	}
+	public void markComplete(GoalComposite<RoverBot> g) {
+		Method m = goalMethodMap.get(g);
+		/*
+		if(m == null) {
+			Main.Message(debugFlag, "[RoverBot " + ID + " ] markComplete goalMethodMap pulls out a null Method for this goal !!");
+			//System.exit(0);
+		}
+		*/
+		if(m != null) {
+			agent.MarkMethodCompleted(m);
+			goalMethodMap.remove(g);
+		}
+	}
 	public void startPid(){doPID = true;}
 	public void stopPid(){doPID = false;}
 	
@@ -97,11 +135,20 @@ public class RoverBot extends RavenBot {
 		}
 	}
 	
+	/*
+	@Override
+	public void update(double delta) {
+		agent.executeSchedule();
+		super.update(delta);
+	}
+	*/
+	
 	/**
 	 * this method is called from the update method. It calculates and applies
 	 * the steering force for this time-step.
 	 * delta is in seconds
 	 */
+	/*
 	@Override
 	protected void updateMovement(double delta) { // delta in seconds
 		
@@ -140,6 +187,75 @@ public class RoverBot extends RavenBot {
 		double noiseSteerAngle = Math.toRadians(noiseSteerAngleDeg);
 		heading.x = Math.cos(noiseSteerAngle);
 		heading.y = Math.sin(noiseSteerAngle);
+		side = heading.perp();
+		//double velX = Math.cos(noiseSteerAngle)*speed;
+		//double velY = Math.sin(noiseSteerAngle)*speed;
+		
+		double velX = heading.x*speed;
+		double velY = heading.y*speed;
+		
+		// calculate delta distance due to distance noise
+		double distNoise = RandUtils.nextGaussian(0, distanceNoise);
+		//double distNoiseX = distNoise*Math.cos(noiseSteerAngle);
+		//double distNoiseY = distNoise*Math.sin(noiseSteerAngle);
+				
+		velocity.x = velX;
+		velocity.y = velY;
+		position.x += velX*delta + distNoise*heading.x;
+		position.y += velY*delta + distNoise*heading.y;
+		this.agent.setPosition(position);
+		//if the vehicle has a non zero velocity the heading and side vectors must 
+		//be updated
+		
+		}
+*/
+	
+	@Override
+	protected void updateMovement(double delta) { // delta in seconds
+		Vector2D tgt = steering.target();
+		float bearing;
+		if(tgt == null) {
+			if( speed > 1){speed -= brakingRate*delta;}
+			else {
+				speed = 0;
+			}
+			return;
+		}
+		else {
+			bearing = (float)Math.atan2(tgt.y - position.y, tgt.x - position.x);
+			
+			//System.out.println("Course " + Math.toDegrees(steering.course) + ", bearing " + Math.toDegrees(bearing) + ", error " + error);
+		}
+		
+		// (2do) pid control, acceleration, deceleration depending on doPID value
+		
+		if(!doPID && speed == 0) return;
+		// apply steering noise and drift
+		double steerAngle = bearing;
+		//double steerAngleDeg = Math.toDegrees(steerAngle);
+		//double noiseSteerAngleDeg = RandUtils.nextGaussian(steerAngleDeg, steeringNoise);
+		//noiseSteerAngleDeg += steeringDrift;
+		
+		//System.out.println("Old steer angle: " + steerAngleDeg);
+		//System.out.println("New steer angle: " + noiseSteerAngleDeg);
+		
+		if (doPID) {
+			if(speed < maxSpeed*1.0) {
+				speed += accelRate*delta;
+				//System.out.println("Accelerating to " + speed);
+				}	
+		}
+		else {
+			//System.out.println("No PID");
+			if( speed > 1){speed -= brakingRate*delta;}
+			else {
+				speed = 0;
+				return;
+			}
+		}
+		//double noiseSteerAngle = Math.toRadians(steerAngleDeg);
+		heading.x = Math.cos(steerAngle);
+		heading.y = Math.sin(steerAngle);
 		side = heading.perp();
 		//double velX = Math.cos(noiseSteerAngle)*speed;
 		//double velY = Math.sin(noiseSteerAngle)*speed;

@@ -25,7 +25,7 @@ public class Goal_PIDFollowPath extends GoalComposite<RoverBot> {
 		}
 		
 	}
-
+	
 	@Override
 	public void activate() { 
 		// Clean subgoals of finished goals.
@@ -66,5 +66,6 @@ public class Goal_PIDFollowPath extends GoalComposite<RoverBot> {
 	public void terminate() {
 		m_iStatus = Goal.CurrentStatus.completed;
 		m_pOwner.stopPid();
+		m_pOwner.markComplete(this);
 	}
 }

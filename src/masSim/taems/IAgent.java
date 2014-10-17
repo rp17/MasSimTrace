@@ -18,4 +18,5 @@ public interface IAgent {
 	public void MarkMethodCompleted(Method method);
 	public AgentMode getMode();
 	public void setMode(AgentMode mode);
+	public void executeSchedule();
 }

@@ -5,6 +5,8 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class Node extends Element  implements IObserver {
 	public static final int    INIT = 0;
@@ -14,7 +16,7 @@ public abstract class Node extends Element  implements IObserver {
 	protected int NodeType;
 	protected transient int status = INIT;
 	protected List<Node> children;
-	public ArrayList<Node> Observers = new ArrayList<Node>();
+	public Queue<Node> Observers = new ConcurrentLinkedQueue<Node>();
 	public abstract boolean IsTask();
 	public Iterator<Node> getSubtasks(){
 		return children.iterator();

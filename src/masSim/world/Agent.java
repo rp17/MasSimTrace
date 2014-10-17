@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import raven.Main;
 import raven.math.Vector2D;
+import raven.game.RavenGame;
 
 public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventListener, Runnable{
 
@@ -73,7 +74,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		if (isManagingAgent) agentsUnderManagement = new ArrayList<IAgent>();
 		fireWorldEvent(TaskType.AGENTCREATED, label, null, x, y, null);
 	}
-	
+	public int schedSize() {return scheduler.schedSize();}
 	public synchronized boolean AreEnablersInPlace(Method m)
 	{
 		boolean methodEnablersCompleted = false;
@@ -98,17 +99,22 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	
 	public void Execute(Method m) throws InterruptedException
 	{
-		
+		Main.Message(true, "[Agent " + this.label + " ] in Execute for method " + m.label + " with x = " + m.x + " ; y = " + m.y);
 		while (!AreEnablersInPlace(m))
 		{
+			// why a polling loop instead of conditional synch ? it should wake up only when of the relevant enablers is set 
 			Main.Message(true, "[Agent " + this.label + " ] " + m.label + " enabler not in place. Waiting...");
 			Thread.sleep(1000);
 		}
 		if (m.x!=0 && m.y!=0)
 		{
+			Main.Message(true, "[Agent " + this.label + " ] about to fire EXECUTEMETHOD event for method " + m.label);
 			fireAgentMovedEvent(TaskType.EXECUTEMETHOD, this.label, m.label, m.x, m.y, this, m);
 			Main.Message(true, "[Agent " + this.label + " ] executing " + m.label);
 			this.flagScheduleRecalculateRequired = false;
+		}
+		else {
+			Main.Message(true, "[Agent " + this.label + " ] Execute method " + m.label + " with 0 x and y !");
 		}
 	}
 	
@@ -160,7 +166,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		{
 			Main.Message(debugFlag, "[Agent " + this.label + " ] Executing Schedule");
 			flagScheduleRecalculateRequired = false;
-			Main.Message(debugFlag, "[Agent " + this.label +  " ] Running again");
+			//Main.Message(debugFlag, "[Agent " + this.label +  " ] Running again");
 			Schedule newSchedule = this.scheduler.RunStatic();
 			if (newSchedule!=null) {
 				schedule.set(newSchedule);
@@ -282,8 +288,10 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		//agentScheduler.start();
 		try {
 			while(true) {
+				// bad pausing; should use proper thread pausing
+				//if(!RavenGame.paused) {executeSchedule();} 
 				executeSchedule();
-				Thread.sleep(100);
+				Thread.sleep(100); // should use frequency regulator instead of constant sleep duration
 			}
 		} catch (InterruptedException e) {
 			//e.printStackTrace();

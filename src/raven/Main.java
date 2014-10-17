@@ -11,11 +11,15 @@ import javax.swing.SwingUtilities;
 import masSim.world.*;
 import masSim.world.WorldEventListener;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
 	private static RavenUI ui;
 	private static RavenGame game;
 	private static boolean debug = true;
+	private static SimWorld3 world;
+	private static ExecutorService exService = Executors.newFixedThreadPool(4);
 	
 	public static void Message(boolean flag, String message)
 	{
@@ -35,8 +39,9 @@ public class Main {
     	//ui = new RavenUI(game);
     	//GameCanvas.getInstance().setNewSize(game.getMap().getSizeX(), game.getMap().getSizeY());
     	game.togglePause();
-		SimWorld3 world = new SimWorld3((WorldEventListener) ui);
+		world = new SimWorld3((WorldEventListener) ui);
 		game.setAgents(world.initAgents());
+		exService.execute(world);
     	gameLoop();
 	}
     
@@ -54,7 +59,7 @@ public class Main {
     		// TODO Resize UI if the map changes!
     		
     		long currentTime = System.nanoTime();
-
+    	
     		game.update((currentTime - lastTime) * 1.0e-9); // converts nano to seconds
     		lastTime = currentTime;
     		// Always dispose the canvas

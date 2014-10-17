@@ -60,7 +60,7 @@ public class RavenGame {
 	PathManager pathManager = new PathManager(RavenScript.getInt("MaxSearchCyclesPerUpdateStep"));;
 
 	/** true if the game is paused */
-	public static volatile boolean paused;
+	public static volatile boolean paused = false;
 
 	/** true if a bot is removed from the game */
 	boolean removeBot;
@@ -155,7 +155,7 @@ public class RavenGame {
 		// render the map
 		map.render();
 		wpts.render();
-		graveMarkers.render();
+		//graveMarkers.render();
 		
 		for (IRavenBot bot : bots) {
 			bot.render();
@@ -182,6 +182,7 @@ public class RavenGame {
 		}
 		*/
 		// render any projectiles
+		/*
 		Log.trace("game", "Rendering projectiles");
 		for (RavenProjectile projectile : projectiles) {
 			projectile.render();
@@ -229,9 +230,10 @@ public class RavenGame {
 				selectedBot.getBrain().renderAtPos(p);
 			}
 		}
+		*/
 	}
 
-	
+	/*
 	public void updateAgents(double delta) {
 		Log.trace("game", "Beginning update");
 		
@@ -266,6 +268,7 @@ public class RavenGame {
 		}
 		
 	}
+	*/
 	
 	/**
 	 * Update the game state over the given timestep in seconds.
@@ -375,7 +378,7 @@ public class RavenGame {
 		}
 		*/
 		// update the triggers
-		map.updateTriggerSystem(delta, bots);
+		//map.updateTriggerSystem(delta, bots);
 		
 		// if the user has requested that the number of bots be decreased,
 		// remove one
@@ -682,6 +685,7 @@ public class RavenGame {
 	 * @param p
 	 *            the location clicked
 	 */
+	/*
 	public void clickRightMouseButton(Vector2D p, boolean shiftKeyPressed) {
 		IRavenBot bot = getBotAtPosition(p);
 		
@@ -720,7 +724,7 @@ public class RavenGame {
 			}
 		}
 	}
-
+*/
 	/**
 	 * this method is called when the user clicks the left mouse button. If
 	 * there is a possessed bot, this fires the weapon, else does nothing
@@ -728,31 +732,35 @@ public class RavenGame {
 	 * @param p
 	 *            the location clicked
 	 */
+	/*
 	public void clickLeftMouseButton(Vector2D p) {
 		if (selectedBot != null && selectedBot.isPossessed()) {
 			selectedBot.fireWeapon(p);
 			Log.debug("game", "Fired possessed bot weapon");
 		}
 	}
-
+*/
 	/** when called will release any possessed bot from user control */
+	/*
 	public void exorciseAnyPossessedBot() {
 		if (selectedBot != null) {
 			selectedBot.exorcise();
 		}
 	}
-
+*/
 	/**
 	 * if a bot is possessed the keyboard is polled for user input and any
 	 * relevant bot methods are called appropriately
 	 * @param delta 
 	 */
+	/*
 	public void getPlayerInput(double delta) {
 		if (selectedBot != null && selectedBot.isPossessed()) {
 			selectedBot.rotateFacingTowardPosition(RavenUI.getClientCursorPosition(), delta);
 		}
 	}
-
+	 */
+	
 	/** Get the value of a selected bot. null if none is selected */
 	public IRavenBot possessedBot() {
 		return selectedBot;
@@ -821,19 +829,25 @@ public class RavenGame {
 		}//next entity
 	}
 	public boolean isPaused(){return paused;}
+	/*
 	public void addWpt(Vector2D pos){
 		wpts.addWpt(pos);
 	}
+	*/
 	public void addWpt(Vector2D pos, String name){
 		wpts.addWpt(pos, name);
 	}
-	public void removeWpt(Vector2D pos, String name){
-		wpts.removeWpt(pos, name);
+	public void removeWpt(String name){
+		wpts.removeWpt(name);
 	}
 	public void clearWpts(){
 		wpts.clearWpts();
 	}
+	public Waypoints.Wpt getWpt(String name) {return wpts.get(name);}
 	public Waypoints getWpts() {return wpts;}
+	
+	// what does this method do ? why not to create new waypoints ?
+	/*
 	public Waypoints getWptsForMethodExecution(String methodName, Vector2D currentPosition)
 	{
 		//Main.Message(true, "[RavenGame 790] getting waypoints for " + methodName );
@@ -851,6 +865,8 @@ public class RavenGame {
 		}
 		return local;
 	}
+	*/
+	
 	public boolean addRoverBotAt(Vector2D pos) {
 		return addRoverBotAt(pos, "default",null);
 	}

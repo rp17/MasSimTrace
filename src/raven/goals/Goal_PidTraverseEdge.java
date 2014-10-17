@@ -33,7 +33,14 @@ public class Goal_PidTraverseEdge extends GoalComposite<RoverBot> {
 		m_dTimeExpected = 0.0;
 		m_bLastEdgeInPath = lastedgeinpath;
 	}
-	
+	//returns true if the bot gets stuck
+		boolean isStuck(){
+			if (elapsedTime > m_dTimeExpected){
+				System.out.println("Bot "  + m_pOwner.ID() + " IS STUCK!!");
+				return true;
+			}
+			else return false;
+		}
 	@Override
 	public void activate() {
 		m_iStatus = Goal.CurrentStatus.active;
@@ -97,8 +104,12 @@ public class Goal_PidTraverseEdge extends GoalComposite<RoverBot> {
 		//System.out.println("Going to x = " + m_Edge.Destination().x + " y = " + m_Edge.Destination().y);
 		double dist = m_pOwner.pos().distanceSq(m_Edge.Destination());
 		//System.out.println("Distance from destination: " + dist);
-			if (m_pOwner.pos().distanceSq(m_Edge.Destination()) < distTolerance) {
+		if(isStuck()) {
+			terminate();
+		}
+		if (m_pOwner.pos().distanceSq(m_Edge.Destination()) < distTolerance) {
 				m_iStatus = Goal.CurrentStatus.completed;
+				((RoverBot)m_pOwner).markComplete(this);
 			}
 		//}
 		return m_iStatus;
