@@ -41,7 +41,9 @@ public class Main {
     	game.togglePause();
 		world = new SimWorld3((WorldEventListener) ui);
 		game.setAgents(world.initAgents());
-		exService.execute(world);
+		//exService.execute(world);
+		world.startAgentThreads();
+		
     	gameLoop();
 	}
     

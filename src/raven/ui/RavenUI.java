@@ -466,7 +466,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		
 	}
 	@Override
-	public void HandleWorldEvent(WorldEvent event) {
+	public synchronized void HandleWorldEvent(WorldEvent event) {
 		if (event.taskType==TaskType.AGENTCREATED)
 		{
 			Vector2D popupLoc = new Vector2D(event.xCoordinate, event.yCoordinate);
@@ -538,7 +538,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		}
 	}
 	@Override
-	public void RegisterMainAgent(IAgent agent) {
+	public synchronized void RegisterMainAgent(IAgent agent) {
 		this.mainAgent = agent;
 	}
 }

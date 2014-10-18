@@ -16,6 +16,12 @@ import masSim.world.*;
 import masSim.world.WorldEvent.TaskType;
 import masSim.taems.*;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
+
 public class SimWorld3 implements WorldEventListener, Runnable {
 
 	private boolean debugFlag = true;
@@ -24,6 +30,9 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	private List<Task> tasksA;
 	private List<Task> tasksB;
 	private List<Task> allTasks;
+	
+	private static final ExecutorService agentPool = Executors.newFixedThreadPool(2);
+	public static final ExecutorService EventProcPool = Executors.newSingleThreadExecutor();
 	
 	private List<WorldEventListener> listeners;
 	private IAgent mainAgent;
@@ -114,33 +123,24 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 			mainAgent.assignTask(task);
 		}
 		
-		/*
+		
 		for( Task task : tasksB) {
 			mainAgent.assignTask(task);
 		}
-		*/
+		
 	}
 	public List<IAgent> initAgents()
 	{
 		initTasks();
 		assignTasksToMain();
-				
-		//Start Agents
-				
-		/*		
-		Iterator<IAgent> it = agents.iterator();
-		while(it.hasNext())
-		{
-			Agent agent = (Agent) it.next();
-			Thread agentThread = new Thread(agent,agent.label);
-			agentThread.start();
-		}
-		*/
 		return agents;
-		
 		//agentOne.assignTask(new Task("Emergency Station",new SumAllQAF(), new Method("Emergency Method",1,300,90), null));
 	}
-	
+	public void startAgentThreads() {
+		for(IAgent agent : agents) {
+			agentPool.execute((Agent)agent);
+		}
+	}
 	public void run() {
 		while(true) {
 			try {
@@ -166,7 +166,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
     }
     
     private int ticks = 0;
-    public void HandleWorldEvent(WorldEvent event) {
+    public synchronized void HandleWorldEvent(WorldEvent event) {
 		
 		if (event.taskType == TaskType.METHODCOMPLETED)
 		{
@@ -199,8 +199,8 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 			}
 			//Main.Message(debugFlag, "[SimWorld] CompletedMethods size " + WorldState.CompletedMethods.size() + " tasksA size " + tasksA.size() + " tasksB size " + tasksB.size());
 			// if(WorldState.CompletedMethods.size() == (tasksA.size() + tasksB.size())) {
-			//if(schedsOneEl) {
-			if(schedsSize == 1) {
+			if(schedsOneEl) {
+			//if(schedsSize == 1) {
 				if(ticks < 4) {
 					ticks++;
 					reassignTasks();
