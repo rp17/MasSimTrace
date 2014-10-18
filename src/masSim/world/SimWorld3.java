@@ -3,6 +3,8 @@ package masSim.world;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import raven.Main;
 import raven.game.RavenGame;
@@ -29,7 +31,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	private List<Task> tasks;
 	private List<Task> tasksA;
 	private List<Task> tasksB;
-	private List<Task> allTasks;
+	private Map<String, Method> methodMap;
 	
 	private static final ExecutorService agentPool = Executors.newFixedThreadPool(2);
 	public static final ExecutorService EventProcPool = Executors.newSingleThreadExecutor();
@@ -43,7 +45,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		tasks = new ArrayList<Task>();
 		tasksA = new ArrayList<Task>();
 		tasksB = new ArrayList<Task>();
-		allTasks = new ArrayList<Task>();
+		methodMap = new HashMap<String, Method>();
 		listeners = new ArrayList<WorldEventListener>();
 		listeners.add(eventListener);
 		listeners.add(this);
@@ -61,61 +63,59 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	}
 	private void initTasks() {
 		Method m_from = new Method("Visit Station A1",10,100,110);
-		//allMethods.add(m_from);
+		methodMap.put(m_from.label, m_from);
 		Task tA1 = new Task("Station A1",new SumAllQAF(), m_from, mainAgent);
 		tasksA.add(tA1);
 		
 		
 		Method mA2 = new Method("Visit Station A2",10,200,90);
-		//allMethods.add(mA2);
+		methodMap.put(mA2.label, mA2);
 		Task tA2 = new Task("Station A2",new SumAllQAF(), mA2, mainAgent);
 		tasksA.add(tA2);
 		
 		
 		Method mA3 = new Method("Visit Station A3",10,500,90);
-		//allMethods.add(mA3);
+		methodMap.put(mA3.label, mA3);
 		tasksA.add(new Task("Station A3",new SumAllQAF(), mA3, mainAgent));
 		
 		Method mA4 = new Method("Visit Station A4",10,500,400);
-		//allMethods.add(mA4);
+		methodMap.put(mA4.label, mA4);
 		tasksA.add(new Task("Station A4",new SumAllQAF(), mA4, mainAgent));
 		
 		Method mA5 = new Method("Visit Station A5",10,400, 400);
-		//allMethods.add(mA5);
+		methodMap.put(mA5.label, mA5);
 		tasksA.add(new Task("Station A5",new SumAllQAF(), mA5, mainAgent));
 		
 		Method mA6 = new Method("Visit Station A6",10,100,150);
-		//allMethods.add(mA6);
+		methodMap.put(mA6.label, mA6);
 		tasksA.add(new Task("Station A6",new SumAllQAF(), mA6, mainAgent));
 		
 		
 		Method m_to = new Method("Visit Station B1",1,100,210);
-		//allMethods.add(m_to);
+		methodMap.put(m_to.label, m_to);
 		//m_to.AddInterrelationship(new Interrelationship(m_from, m_to, new Outcome(100,1,1)));
 		tasksB.add(new Task("Station B1",new SumAllQAF(), m_to, agents.get(1)));
 		
 		Method mB2 = new Method("Visit Station B2",1,200,190);
-		//allMethods.add(mB2);
+		methodMap.put(mB2.label, mB2);
 		tasksB.add(new Task("Station B2",new SumAllQAF(), mB2, agents.get(1)));
 		
 		Method mB3 = new Method("Visit Station B3",1,300,210);
-		//allMethods.add(mB3);
+		methodMap.put(mB3.label, mB3);
 		tasksB.add(new Task("Station B3",new SumAllQAF(), mB3, agents.get(1)));
 		
 		Method mB4 = new Method("Visit Station B4",1,400,190);
-		//allMethods.add(mB4);
+		methodMap.put(mB4.label, mB4);
 		tasksB.add(new Task("Station B4",new SumAllQAF(), mB4, agents.get(1)));
 		
 		Method mB5 = new Method("Visit Station B5",1,500,210);
-		//allMethods.add(mB5);
+		methodMap.put(mB5.label, mB5);
 		tasksB.add(new Task("Station B5",new SumAllQAF(), mB5, agents.get(1)));
 		
 		
 		Method mB6 = new Method("Visit Station B6",1,600,190);
-		//allMethods.add(mB6);
+		methodMap.put(mB6.label, mB6);
 		tasksB.add(new Task("Station B6",new SumAllQAF(), mB6, agents.get(1)));
-		//allTasks.addAll(tasksA);
-		//allTasks.addAll(tasksB);
 	}
 	
 	private void assignTasksToMain() {
@@ -199,7 +199,9 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 			}
 			//Main.Message(debugFlag, "[SimWorld] CompletedMethods size " + WorldState.CompletedMethods.size() + " tasksA size " + tasksA.size() + " tasksB size " + tasksB.size());
 			// if(WorldState.CompletedMethods.size() == (tasksA.size() + tasksB.size())) {
-			if(schedsOneEl) {
+			Main.Message(debugFlag, "[SimWorld] removing from methodMap method " + event.methodId);
+			methodMap.remove(event.methodId);
+			if(methodMap.size() == 0) {
 			//if(schedsSize == 1) {
 				if(ticks < 4) {
 					ticks++;
@@ -219,6 +221,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
     	WorldState.clearCompletedMethods();
     	tasksA.clear();
     	tasksB.clear();
+    	methodMap.clear();
     	initTasks();
     	assignTasksToMain();
     }
