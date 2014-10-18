@@ -39,7 +39,9 @@ public class Schedule {
 	public boolean hasNext(int ind) {
 		return ind < items.size();
 	}
-	public int size() {return items.size();}
+	public int size() {
+		return items.size();
+		}
 	public Iterator<ScheduleElement> getItems() {
 		return items.iterator();
 	}

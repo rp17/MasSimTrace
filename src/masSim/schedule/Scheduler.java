@@ -34,9 +34,13 @@ public class Scheduler {// implements Runnable {
 	public Scheduler(IAgent agent)
 	{
 		this.agent = agent;
+		schedule = new Schedule();
 		taskGroup = new Task("Task Group",new SumAllQAF(), null, agent);
 	}
-	public int schedSize() {return schedule.size();}
+	public Schedule getSched() {return schedule;}
+	public int schedSize() {
+		if(schedule == null) return 0;
+		else return schedule.size();}
 	//public Schedule getSchedule() {return schedule;}
 	//A public method to feed new tasks to the scheduler
 	public void AddScheduleUpdateEventListener(IScheduleUpdateEventListener listener)

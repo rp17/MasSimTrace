@@ -75,6 +75,9 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		fireWorldEvent(TaskType.AGENTCREATED, label, null, x, y, null);
 	}
 	public int schedSize() {return scheduler.schedSize();}
+	public Schedule getSched() {
+		return scheduler.getSched();
+	}
 	public synchronized boolean AreEnablersInPlace(Method m)
 	{
 		boolean methodEnablersCompleted = false;
