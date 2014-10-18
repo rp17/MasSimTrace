@@ -150,12 +150,18 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		
 	}
 	
-	public void fireAgentMovedEvent(TaskType type, String agentId, String methodId, double x2, double y2, IAgent agent, Method method) {
-        Main.Message(debugFlag, "[Agent " + this.label + " ] Firing Execute Method for " + methodId);
-		WorldEvent worldEvent = new WorldEvent(this, TaskType.EXECUTEMETHOD, agentId, methodId, x2, y2, agent, method);
-		for(WorldEventListener listener : listeners) {
-			listener.HandleWorldEvent(worldEvent);
-		}
+	public void fireAgentMovedEvent(TaskType type, final String agentId, final String methodId, final double x2, final double y2, final IAgent agent, final Method method) {
+		final Agent ag = this;
+		SimWorld3.EventProcPool.execute(new Runnable() {
+			@Override
+	 		public void run() {
+				Main.Message(debugFlag, "[Agent " + ag.label + " ] Firing Execute Method for " + methodId);
+				WorldEvent worldEvent = new WorldEvent(ag, TaskType.EXECUTEMETHOD, agentId, methodId, x2, y2, agent, method);
+				for(WorldEventListener listener : listeners) {
+					listener.HandleWorldEvent(worldEvent);
+				}
+			}
+		});
     }
 	
 	// Returns identifying code, specific for this agent
@@ -319,15 +325,18 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		this.agentsUnderManagement.add(agent);
 	}
 	
-	public synchronized void fireWorldEvent(TaskType type, String agentId, String methodId, double x2, double y2, Method method) {
-        WorldEvent worldEvent = new WorldEvent(this, type, agentId, methodId, x2, y2, this, method);
-        WorldEventListener listener;
-        for(int i=0;i<listeners.size();i++)
-        {
-        	Object o = listeners.get(i);
-        	listener = (WorldEventListener) o;
-        	listener.HandleWorldEvent(worldEvent);
-        }
+	public void fireWorldEvent(final TaskType type, final String agentId, final String methodId, final double x2, final double y2, final Method method) {
+		final Agent ag = this;
+		SimWorld3.EventProcPool.execute(new Runnable() {
+			@Override
+	 		public void run() {
+				Main.Message(debugFlag, "[Agent " + ag.label + " ] Firing Execute Method for " + methodId);
+				WorldEvent worldEvent = new WorldEvent(ag, type, agentId, methodId, x2, y2, ag, method);
+				for(WorldEventListener listener : listeners) {
+					listener.HandleWorldEvent(worldEvent);
+				}
+			}
+		});
     }
 
 	@Override
