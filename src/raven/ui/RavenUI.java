@@ -73,7 +73,7 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 	private int height = 700;
 	private int framerate = 60;
 	private IAgent mainAgent;
-	private int masSimTaskCount = 1;
+	public static volatile int masSimTaskCount = 1;
 
 	private RavenGame game;
 	private KeyState keys;
@@ -465,6 +465,13 @@ public class RavenUI extends JFrame implements KeyListener, MouseInputListener, 
 		// TODO Auto-generated method stub
 		
 	}
+	
+	public synchronized void assignDynamicTask(double x, double y) {
+		Main.Message(debugFlag, "[RavenUI} assigning dynamic task x " + x + " y " + y);
+		mainAgent.assignTask(Task.CreateDefaultTask(masSimTaskCount++, x, y));
+		Main.Message(debugFlag, "[RavenUI} have assigned dynamic task x " + x + " y " + y);
+	}
+	
 	@Override
 	public synchronized void HandleWorldEvent(WorldEvent event) {
 		if (event.taskType==TaskType.AGENTCREATED)

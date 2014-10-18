@@ -11,6 +11,7 @@ import raven.game.RavenGame;
 import raven.game.RoverBot;
 import raven.game.Waypoints;
 import raven.game.interfaces.IRavenBot;
+import raven.ui.RavenUI;
 import raven.goals.GoalComposite;
 import raven.math.Vector2D;
 import raven.ui.GoalCompletionWatcher;
@@ -32,9 +33,13 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	private List<Task> tasksA;
 	private List<Task> tasksB;
 	private Map<String, Method> methodMap;
+	private int masSimTaskCount = 1;
+	
+	public static long dynamicEventDelay = 2500; // in milliseconds
 	
 	private static final ExecutorService agentPool = Executors.newFixedThreadPool(2);
 	public static final ExecutorService EventProcPool = Executors.newSingleThreadExecutor();
+	public static final ExecutorService TimerPool = Executors.newSingleThreadExecutor();
 	
 	private List<WorldEventListener> listeners;
 	private IAgent mainAgent;
@@ -127,7 +132,11 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		for( Task task : tasksB) {
 			mainAgent.assignTask(task);
 		}
-		
+		((Agent)mainAgent).dynamicEventX = 400;
+		((Agent)mainAgent).dynamicEventY = 200;
+		((Agent)mainAgent).eventTime = System.currentTimeMillis() + dynamicEventDelay;
+		Main.Message(debugFlag, "[SimWorld] eventTime = " + ((Agent)mainAgent).eventTime);
+				
 	}
 	public List<IAgent> initAgents()
 	{
@@ -217,13 +226,24 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		//Main.Message(debugFlag, "[RavenUI 488] Executing Task at " + popupLoc.x + " " + popupLoc.y);
 		
 	}
+    public void assignDynamicTask(double x, double y) {
+		Main.Message(debugFlag, "[RavenUI} assigning dynamic task x " + x + " y " + y);
+		mainAgent.assignTask(Task.CreateDefaultTask(masSimTaskCount++, x, y));
+		Main.Message(debugFlag, "[RavenUI} have assigned dynamic task x " + x + " y " + y);
+	}
     private void reassignTasks(){
     	WorldState.clearCompletedMethods();
     	tasksA.clear();
     	tasksB.clear();
     	methodMap.clear();
     	initTasks();
+    	/*
+    	Main.scenStartTime = System.nanoTime();
+    	Main.eventTime = Main.scenStartTime + (long)(Main.dynamicEventDelay*1.0e6);
+    	Main.dynamicEvent = true;
+    	*/
     	assignTasksToMain();
+    	//Main.assignDynamicTask(2500, 400, 200); // 2.5 secs from start of a scenario at pixel position x=400, y= 200
     }
     public void RegisterMainAgent(IAgent agent) {
 		this.mainAgent = agent;

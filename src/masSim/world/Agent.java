@@ -22,6 +22,7 @@ import raven.game.RavenGame;
 public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventListener, Runnable{
 
 	private boolean debugFlag = true;
+	private boolean managing;
 	private static int GloballyUniqueAgentId = 1;
 	private int code;
 	private Scheduler scheduler;
@@ -35,6 +36,10 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	public double y;
 	public boolean flagScheduleRecalculateRequired;
 	public Queue<Method> queue = new LinkedList<Method>();
+	public volatile long eventTime;
+	public volatile int dynamicEventX;
+	public volatile int dynamicEventY;
+	private int masSimTaskCount = 1;
 	
 	
 	private enum Status {
@@ -71,6 +76,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		this.scheduler.AddScheduleUpdateEventListener(this);
 		this.x = x;
 		this.y = y;
+		managing = isManagingAgent;
 		if (isManagingAgent) agentsUnderManagement = new ArrayList<IAgent>();
 		fireWorldEvent(TaskType.AGENTCREATED, label, null, x, y, null);
 	}
@@ -78,6 +84,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	public Schedule getSched() {
 		return scheduler.getSched();
 	}
+	public boolean isMain() {return managing;}
 	public synchronized boolean AreEnablersInPlace(Method m)
 	{
 		boolean methodEnablersCompleted = false;
@@ -174,6 +181,12 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		while(flagScheduleRecalculateRequired)
 		{
 			Main.Message(debugFlag, "[Agent " + this.label + " ] Executing Schedule");
+			if(managing) {
+				System.out.println("[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime);
+				if(System.currentTimeMillis() >  eventTime ) {
+					assignTask(Task.CreateDefaultTask(masSimTaskCount++, dynamicEventX, dynamicEventY));
+				}
+			}
 			flagScheduleRecalculateRequired = false;
 			//Main.Message(debugFlag, "[Agent " + this.label +  " ] Running again");
 			Schedule newSchedule = this.scheduler.RunStatic();
@@ -212,8 +225,8 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	/**
 	 * this method handles the assignment goals
 	 */
-	public void assignTask(Task task){
-		if (task.agent!=null)
+	public synchronized void assignTask(Task task){
+		if (task.agent != null)
 		{
 			if (this.equals(task.agent))
 			{
@@ -268,11 +281,11 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 			assignTask(task);
 		}
 	}
-	
+	/*
 	public void update(int tick) {
 	
 	}
-	/*
+	
 	public void update(int tick) {
 		
 		if(schedule.get().hasNext(taskInd)) {
@@ -301,6 +314,15 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 				//if(!RavenGame.paused) {executeSchedule();} 
 				executeSchedule();
 				Thread.sleep(100); // should use frequency regulator instead of constant sleep duration
+				//System.out.println("[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime);
+				/*
+				if(managing) {
+					System.out.println("[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime);
+					if(System.currentTimeMillis() >  eventTime ) {
+						assignTask(Task.CreateDefaultTask(masSimTaskCount++, dynamicEventX, dynamicEventY));
+					}
+				}
+				*/
 			}
 		} catch (InterruptedException e) {
 			//e.printStackTrace();

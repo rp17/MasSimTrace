@@ -9,7 +9,6 @@ import raven.utils.Log.Level;
 import javax.swing.SwingUtilities;
 
 import masSim.world.*;
-import masSim.world.WorldEventListener;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +20,10 @@ public class Main {
 	private static SimWorld3 world;
 	private static ExecutorService exService = Executors.newFixedThreadPool(4);
 	
+	public static long scenStartTime; // nanoseconds
+	public static long dynamicEventDelay = 2500; // milliseconds, 2.5 secs
+	public static long eventTime; // nanoseconds
+	public static volatile boolean dynamicEvent = true;
 	public static void Message(boolean flag, String message)
 	{
 		if (debug && flag) System.out.println(message);
@@ -43,7 +46,7 @@ public class Main {
 		game.setAgents(world.initAgents());
 		//exService.execute(world);
 		world.startAgentThreads();
-		
+		//Main.assignDynamicTask(2500, 400, 200); // 2.5 secs from start of a scenario at pixel position x=400, y= 200
     	gameLoop();
 	}
     
@@ -56,7 +59,8 @@ public class Main {
     	Log.info("raven", "Starting game...");
     	
     	long lastTime = System.nanoTime();
-    	
+    	scenStartTime = lastTime;
+    	eventTime = scenStartTime + (long)(dynamicEventDelay*1.0e6);
     	while (true) {
     		// TODO Resize UI if the map changes!
     		
@@ -89,14 +93,37 @@ public class Main {
     		//TestTaemsScheduler();
 
     		long millisToNextUpdate = (long) Math.max(0, 16.66667 - (System.nanoTime() - currentTime)*1.0e-6);
-			
+    		/*
+			if(dynamicEvent && currentTime > eventTime) {
+				dynamicEvent = false;
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						ui.assignDynamicTask(400, 200);
+					}
+				});
+				
+			}
+			*/
 			try {
-				Thread.sleep(millisToNextUpdate);
+				Thread.sleep(millisToNextUpdate); // sleeps in case there is remaining time in an iteration to maintain a certain update frequency
 			} catch (InterruptedException e) {
 				break;
 			}
     	}
     }
 
-
+	public static void assignDynamicTask(final long sleep, final double x, final double y) {
+		SimWorld3.TimerPool.execute(new Runnable() {
+			@Override
+	 		public void run() {
+				//try {
+					//Thread.sleep(sleep);
+					world.assignDynamicTask(x, y);
+				//}
+				//catch(InterruptedException ex) {
+					//System.out.println("Thread for Main.assignDynamicTask x " + x + " y " + y + " interrupted");
+				//}
+			}
+		});
+	}
 }
