@@ -35,6 +35,8 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	private Map<String, Method> methodMap;
 	private int masSimTaskCount = 1;
 	
+	private final static int NumEpisodes = 4;
+	
 	public static long dynamicEventDelay = 2500; // in milliseconds
 	public static final int DynamicEventX = 400;
 	public static final int DynamicEventY = 120;
@@ -135,6 +137,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		for( Task task : tasksB) {
 			mainAgent.assignTask(task);
 		}
+		
 		((Agent)mainAgent).dynamicEventX = DynamicEventX;
 		((Agent)mainAgent).dynamicEventY = DynamicEventY;
 		((Agent)mainAgent).eventTime = System.currentTimeMillis() + dynamicEventDelay;
@@ -184,6 +187,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		if (event.taskType == TaskType.METHODCOMPLETED)
 		{
 			Method m = event.method;
+			/*
 			Main.Message(debugFlag, "[SimWorld] method " + m.label + " completed");
 			
 			int schedsSize = 0;
@@ -210,19 +214,21 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 					}
 				}
 			}
+			*/
 			//Main.Message(debugFlag, "[SimWorld] CompletedMethods size " + WorldState.CompletedMethods.size() + " tasksA size " + tasksA.size() + " tasksB size " + tasksB.size());
 			// if(WorldState.CompletedMethods.size() == (tasksA.size() + tasksB.size())) {
-			Main.Message(debugFlag, "[SimWorld] removing from methodMap method " + event.methodId);
-			methodMap.remove(event.methodId);
+			
+			methodMap.remove(m.label);
+			Main.Message(debugFlag, "[SimWorld] removing from methodMap method " + m + " methodMap.size " + methodMap.size());
 			if(methodMap.size() == 0) {
 			//if(schedsSize == 1) {
-				if(ticks < 4) {
+				if(ticks < NumEpisodes) {
 					ticks++;
 					reassignTasks();
-					Main.Message(debugFlag, "[SimWorld] both paths A and B completed, reassigning tasks");
+					Main.Message(debugFlag, "[SimWorld] both paths A and B completed, reassigning tasks for episode " + ticks);
 				}
 				else {
-					Main.Message(debugFlag, "[SimWorld] both paths A and B completed, end of scenario");
+					Main.Message(debugFlag, "[SimWorld] both paths A and B completed, end of " + NumEpisodes + " episodes; simulation finished");
 				}
 				
 			}
@@ -267,25 +273,20 @@ public class SimWorld3 implements WorldEventListener, Runnable {
     	}
     	return ag == bestAg;
     }
-    
+    /*
     public void assignDynamicTask(double x, double y) {
 		Main.Message(debugFlag, "[RavenUI} assigning dynamic task x " + x + " y " + y);
 		mainAgent.assignTask(Task.CreateDefaultTask(masSimTaskCount++, x, y));
 		Main.Message(debugFlag, "[RavenUI} have assigned dynamic task x " + x + " y " + y);
 	}
+	*/
     private void reassignTasks(){
     	WorldState.clearCompletedMethods();
     	tasksA.clear();
     	tasksB.clear();
     	methodMap.clear();
     	initTasks();
-    	/*
-    	Main.scenStartTime = System.nanoTime();
-    	Main.eventTime = Main.scenStartTime + (long)(Main.dynamicEventDelay*1.0e6);
-    	Main.dynamicEvent = true;
-    	*/
     	assignTasksToMain();
-    	//Main.assignDynamicTask(2500, 400, 200); // 2.5 secs from start of a scenario at pixel position x=400, y= 200
     }
     public void RegisterMainAgent(IAgent agent) {
 		this.mainAgent = agent;

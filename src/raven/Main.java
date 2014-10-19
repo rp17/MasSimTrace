@@ -14,26 +14,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main {
-	private static RavenUI ui;
-	public static RavenGame game;
+	
+	public final static RavenGame game = new RavenGame();
+	private final static RavenUI ui = new RavenUI(game);
 	private static boolean debug = true;
-	private static SimWorld3 world;
-	private static ExecutorService exService = Executors.newFixedThreadPool(4);
+	private final static SimWorld3 world = new SimWorld3((WorldEventListener) ui);
+	private final static ExecutorService LogPool = Executors.newSingleThreadExecutor();
 	
 	public static long scenStartTime; // nanoseconds
 	public static long dynamicEventDelay = 2500; // milliseconds, 2.5 secs
 	public static long eventTime; // nanoseconds
 	public static volatile boolean dynamicEvent = true;
-	public static void Message(boolean flag, String message)
+	public static void Message(final boolean flag, final String message)
 	{
-		if (debug && flag) System.out.println(message);
+		
+		LogPool.execute(new Runnable() {
+			public void run() {
+				if (debug && flag) System.out.println(message);
+			}
+		}
+		);
+		
+		//if (debug && flag) System.out.println(message);
 	}
 	
     public static void main(String args[]) {
     	
     	Log.setLevel(Level.DEBUG);
-    	game = new RavenGame();
-    	ui = new RavenUI(game);
     	SwingUtilities.invokeLater(new Runnable() {
   	      public void run() {
   	    	GameCanvas.getInstance().setNewSize(game.getMap().getSizeX(), game.getMap().getSizeY());
@@ -42,11 +49,10 @@ public class Main {
     	//ui = new RavenUI(game);
     	//GameCanvas.getInstance().setNewSize(game.getMap().getSizeX(), game.getMap().getSizeY());
     	game.togglePause();
-		world = new SimWorld3((WorldEventListener) ui);
 		game.setAgents(world.initAgents());
-		//exService.execute(world);
+		
 		world.startAgentThreads();
-		//Main.assignDynamicTask(2500, 400, 200); // 2.5 secs from start of a scenario at pixel position x=400, y= 200
+		
     	gameLoop();
 	}
     
@@ -93,17 +99,7 @@ public class Main {
     		//TestTaemsScheduler();
 
     		long millisToNextUpdate = (long) Math.max(0, 16.66667 - (System.nanoTime() - currentTime)*1.0e-6);
-    		/*
-			if(dynamicEvent && currentTime > eventTime) {
-				dynamicEvent = false;
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						ui.assignDynamicTask(400, 200);
-					}
-				});
-				
-			}
-			*/
+    		
 			try {
 				Thread.sleep(millisToNextUpdate); // sleeps in case there is remaining time in an iteration to maintain a certain update frequency
 			} catch (InterruptedException e) {
@@ -112,6 +108,7 @@ public class Main {
     	}
     }
 
+	/*
 	public static void assignDynamicTask(final long sleep, final double x, final double y) {
 		SimWorld3.TimerPool.execute(new Runnable() {
 			@Override
@@ -126,4 +123,5 @@ public class Main {
 			}
 		});
 	}
+	*/
 }
