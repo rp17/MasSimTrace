@@ -38,6 +38,7 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	public static long dynamicEventDelay = 2500; // in milliseconds
 	public static final int DynamicEventX = 400;
 	public static final int DynamicEventY = 120;
+	public static final Vector2D locDynamicEvent = new Vector2D(DynamicEventX, DynamicEventY);
 	
 	private static final ExecutorService agentPool = Executors.newFixedThreadPool(2);
 	public static final ExecutorService EventProcPool = Executors.newSingleThreadExecutor();
@@ -229,6 +230,44 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		//Main.Message(debugFlag, "[RavenUI 488] Executing Task at " + popupLoc.x + " " + popupLoc.y);
 		
 	}
+    
+    public boolean isOptimalAgent(IAgent ag) {
+    	Vector2D loc = locDynamicEvent;
+    	IAgent bestAg = ag;
+    	RoverBot bestBot = (RoverBot)Main.game.getBotByName(ag.getName());
+    	if(bestBot == null) return false;
+    	double shortestSqDist = loc.distanceSq(bestBot.pos());
+    	
+    	for(IAgent agent : agents) {
+    		RoverBot bot = (RoverBot)Main.game.getBotByName(agent.getName());
+    		double sqDist = loc.distanceSq(bot.pos());
+    		if(sqDist < shortestSqDist) {
+    			shortestSqDist = sqDist;
+    			bestAg = agent;
+    		}
+    	}
+    	return ag == bestAg;
+    }
+    
+    
+    public boolean isOptimalAgent(IAgent ag, double x, double y) {
+    	Vector2D loc = new Vector2D(x, y);
+    	IAgent bestAg = ag;
+    	RoverBot bestBot = (RoverBot)Main.game.getBotByName(ag.getName());
+    	if(bestBot == null) return false;
+    	double shortestSqDist = loc.distanceSq(bestBot.pos());
+    	
+    	for(IAgent agent : agents) {
+    		RoverBot bot = (RoverBot)Main.game.getBotByName(agent.getName());
+    		double sqDist = loc.distanceSq(bot.pos());
+    		if(sqDist < shortestSqDist) {
+    			shortestSqDist = sqDist;
+    			bestAg = agent;
+    		}
+    	}
+    	return ag == bestAg;
+    }
+    
     public void assignDynamicTask(double x, double y) {
 		Main.Message(debugFlag, "[RavenUI} assigning dynamic task x " + x + " y " + y);
 		mainAgent.assignTask(Task.CreateDefaultTask(masSimTaskCount++, x, y));

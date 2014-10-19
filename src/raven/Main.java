@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 
 public class Main {
 	private static RavenUI ui;
-	private static RavenGame game;
+	public static RavenGame game;
 	private static boolean debug = true;
 	private static SimWorld3 world;
 	private static ExecutorService exService = Executors.newFixedThreadPool(4);
