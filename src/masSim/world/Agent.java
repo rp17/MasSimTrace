@@ -39,6 +39,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 	public volatile long eventTime;
 	public volatile int dynamicEventX;
 	public volatile int dynamicEventY;
+	public volatile boolean dynamicEvent;
 	private int masSimTaskCount = 1;
 	
 	
@@ -182,9 +183,20 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 		{
 			Main.Message(debugFlag, "[Agent " + this.label + " ] Executing Schedule");
 			if(managing) {
-				System.out.println("[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime);
-				if(System.currentTimeMillis() >  eventTime ) {
-					assignTask(Task.CreateDefaultTask(masSimTaskCount++, dynamicEventX, dynamicEventY));
+				if(dynamicEvent) {
+					if(System.currentTimeMillis() >=  eventTime ) {
+						Main.Message(debugFlag, "[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime + " currentTime >= eventTime , adding dynamic task");
+						SimWorld3.TimerPool.execute(new Runnable() {
+							public void run() {
+								assignTask(Task.CreateDefaultTask(masSimTaskCount++, dynamicEventX, dynamicEventY));
+								dynamicEvent = false;
+							}
+						}
+						);
+					}
+					else {
+						Main.Message(debugFlag, "[Agent " + this.label + " ] currrent time = " + System.currentTimeMillis() + " event time = " + eventTime + " currentTime < eventTime , no dynamic task added");
+					}
 				}
 			}
 			flagScheduleRecalculateRequired = false;
@@ -246,7 +258,7 @@ public class Agent extends BaseElement implements IAgent, IScheduleUpdateEventLi
 			}
 			else if (this.agentsUnderManagement.contains(task.agent)) 
 			{
-				Main.Message(debugFlag, "[Agent " + this.label + " ] "+ task.label + " already has agent assigned");
+				Main.Message(debugFlag, "[Agent " + this.label + " ] task "+ task.label + " is assigned to an agent other than mainAgent");
 				task.agent.assignTask(task);
 			}
 			else

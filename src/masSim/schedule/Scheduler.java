@@ -106,7 +106,7 @@ public class Scheduler {// implements Runnable {
 	List<Task> newTaskList = new ArrayList<Task>();
 	public Schedule RunStatic()
 	{
-		try {
+		//try {
 			//Read all new tasks
 			int numberOfPendingTasks = this.PendingTasks.size();
 			if (numberOfPendingTasks<=0) return null;
@@ -140,10 +140,10 @@ public class Scheduler {// implements Runnable {
 					listener.HandleScheduleEvent(new ScheduleUpdateEvent(schedule));
 				}*/
 			}
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+			//Thread.sleep(10000); // why such a long sleep ? conditional synchronization ??
+		//} catch (InterruptedException e) {
+		//	e.printStackTrace();
+		//}
 		return null;
 	}
 

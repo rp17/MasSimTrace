@@ -36,6 +36,8 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 	private int masSimTaskCount = 1;
 	
 	public static long dynamicEventDelay = 2500; // in milliseconds
+	public static final int DynamicEventX = 400;
+	public static final int DynamicEventY = 120;
 	
 	private static final ExecutorService agentPool = Executors.newFixedThreadPool(2);
 	public static final ExecutorService EventProcPool = Executors.newSingleThreadExecutor();
@@ -132,9 +134,10 @@ public class SimWorld3 implements WorldEventListener, Runnable {
 		for( Task task : tasksB) {
 			mainAgent.assignTask(task);
 		}
-		((Agent)mainAgent).dynamicEventX = 400;
-		((Agent)mainAgent).dynamicEventY = 200;
+		((Agent)mainAgent).dynamicEventX = DynamicEventX;
+		((Agent)mainAgent).dynamicEventY = DynamicEventY;
 		((Agent)mainAgent).eventTime = System.currentTimeMillis() + dynamicEventDelay;
+		((Agent)mainAgent).dynamicEvent = true;
 		Main.Message(debugFlag, "[SimWorld] eventTime = " + ((Agent)mainAgent).eventTime);
 				
 	}
