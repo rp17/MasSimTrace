@@ -1,20 +1,24 @@
 package raven.game;
 
-import java.util.ArrayList;
-import java.util.List;
+//import java.util.ArrayList;
+//import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Iterator;
 //import java.util.HashSet;
 //import java.util.LinkedList;
 //import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-
+//import java.util.Map;
+//import java.util.HashMap;
 //import raven.math.Transformations;
 import raven.math.Vector2D;
 import raven.ui.GameCanvas;
 
 public class Waypoints {
-	private List<Wpt> wpts = new ArrayList<Wpt>(10);
-	private Map<String, Wpt> wptsMap = new HashMap<String, Wpt>();
+	private Queue<Wpt> wpts = new ConcurrentLinkedQueue<Wpt>();
+	private ConcurrentMap<String, Wpt> wptsMap = new ConcurrentHashMap<String, Wpt>();
 	
 	public class Wpt {
 		public Vector2D pos;
@@ -35,28 +39,30 @@ public class Waypoints {
 		wpts.add(new Wpt(pos));
 	}
 	*/
-	public void addWpt(Waypoints.Wpt wpt, String name) {
+	// all updates involving both Queue wpts and HashMap wptsMap should be atomic
+	public synchronized void  addWpt(Waypoints.Wpt wpt, String name) {
 		wpts.add(wpt);
 		wptsMap.put(name, wpt);
 	}
-	public void addWpt(Vector2D pos, String name) {
+	public synchronized void addWpt(Vector2D pos, String name) {
 		Wpt wpt = new Wpt(pos, name);
 		wpts.add(wpt);
-		wptsMap.put(name, wpt);
+		wptsMap.putIfAbsent(name, wpt);
 	}
-	public void removeWpt(String name) {
+	public synchronized void removeWpt(String name) {
 		Wpt wpt = wptsMap.get(name);
 		if(wpt != null) {
 			wptsMap.remove(name);
 			wpts.remove(wpt);
 		}
 	}
-	public void clearWpts(){
+	public synchronized void clearWpts(){
 		wpts.clear();
 		wptsMap.clear();
 	}
 	public int size(){return wpts.size();}
-	public Waypoints.Wpt get(int i) {return wpts.get(i);}
+	public Iterator<Waypoints.Wpt> getIter() {return wpts.iterator();}
+	//public Waypoints.Wpt get(int i) {return wpts.get(i);}
 	public Waypoints.Wpt get(String name)
 	{
 		return wptsMap.get(name);

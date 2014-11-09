@@ -8,6 +8,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import masSim.taems.IAgent;
 import masSim.taems.Method;
@@ -66,10 +67,12 @@ public class RoverBot extends RavenBot {
 	public GoalComposite<RoverBot> addWptsGoal(Waypoints wpts){
 		if(wpts.size() > 1) {
 			List<PathEdge>  m_Path = new ArrayList<PathEdge>();
-			Vector2D src = wpts.get(0).pos;
+			Iterator<Waypoints.Wpt> wptsIter = wpts.getIter();
+			//Vector2D src = wpts.get(0).pos;
+			Vector2D src = wptsIter.next().pos;
 			Vector2D dest = null;
-			for(int i=1; i < wpts.size(); i++) {
-				Waypoints.Wpt wpt = wpts.get(i);
+			while(wptsIter.hasNext()) {
+				Waypoints.Wpt wpt = wptsIter.next();
 				dest = wpt.pos;
 				PathEdge edge = new PathEdge(src, dest, NavGraphEdge.NORMAL, 0);
 				m_Path.add(edge);
